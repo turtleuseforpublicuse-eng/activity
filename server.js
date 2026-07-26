@@ -15,6 +15,10 @@ const TIER = config.tier;
 const QUESTIONS = config.questions;
 const TOTAL_Q = QUESTIONS.length;
 
+/* ── Room Code ──────────────────────────────────────── */
+let roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+let verifiedSockets = new Set();
+
 /* ── Game State ─────────────────────────────────────── */
 let state = {
   phase: 'lobby',
@@ -26,10 +30,10 @@ let state = {
   essayOrder: null
 };
 
-let players = {};          // name -> { avatar, score, socketId }
-let answers = {};          // qIndex -> { playerName -> { value, tMs } }
-let essays = {};           // playerName -> { text, tMs }
-let votes = {};            // voterName -> targetName
+let players = {};
+let answers = {};
+let essays = {};
+let votes = {};
 let socketToName = {};
 let timerHandle = null;
 
@@ -194,28 +198,42 @@ function broadcastState() {
     players: Object.fromEntries(ROSTER.filter(n => players[n]).map(n => [n, { name: n, avatar: players[n].avatar, score: players[n].score || 0 }])),
     submittedCount: answers[state.currentQ] ? Object.keys(answers[state.currentQ]).length : 0,
     prevStandings: state.prevStandings,
-    qData: state.currentQ >= 0 && state.currentQ < TOTAL_Q ? QUESTIONS[state.currentQ] : null
+    qData: state.currentQ >= 0 && state.currentQ < TOTAL_Q ? QUESTIONS[state.currentQ] : null,
+    results: state.results
   });
 }
 
 /* ── Socket Handlers ────────────────────────────────── */
 io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
-  socket.emit('config', { roster: ROSTER, colors: config.colors });
-  broadcastState();
 
-  /* Client requests */
-socket.on('requestRoster', () => { socket.emit('rosterData', ROSTER); });
-socket.on('requestState', () => { broadcastState(); });
-socket.on('requestEssays', () => {
-  const q = QUESTIONS[state.currentQ];
-  if (!q || q.type !== 'essayvote') return;
-  const order = state.essayOrder || Object.keys(essays);
-  socket.emit('essayData', order.map(name => ({ name, text: essays[name] ? essays[name].text : '' })));
-});
+  /* ── Room Code Verification ─────────────────────── */
+  socket.on('requestRoster', () => {
+    socket.emit('rosterData', ROSTER);
+  });
 
-  /* Student joins */
+  socket.on('verifyRoom', (code) => {
+    if ((code || '').toUpperCase() === roomCode) {
+      verifiedSockets.add(socket.id);
+      socket.emit('roomVerified', { ok: true });
+    } else {
+      socket.emit('roomVerified', { ok: false, error: 'Invalid code!' });
+    }
+  });
+
+  socket.on('requestState', () => {
+    broadcastState();
+  });
+
+  /* Host gets room code */
+  socket.on('requestHostData', () => {
+    socket.emit('hostData', { roomCode });
+    broadcastState();
+  });
+
+  /* ── Student joins ──────────────────────────────── */
   socket.on('student:join', (data) => {
+    if (!verifiedSockets.has(socket.id)) return socket.emit('error:msg', 'Enter the room code first.');
     const name = (data.name || '').trim();
     if (!name || !ROSTER.includes(name)) return socket.emit('error:msg', 'Invalid name.');
     if (players[name] && players[name].socketId) return socket.emit('error:msg', 'Name already in use on another device.');
@@ -311,6 +329,8 @@ socket.on('requestEssays', () => {
     essays = {};
     votes = {};
     socketToName = {};
+    verifiedSockets = new Set();
+    roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
     broadcastState();
   });
 
@@ -369,10 +389,18 @@ socket.on('requestEssays', () => {
     io.emit('vote:count', { count: Object.keys(votes).length });
   });
 
+  socket.on('requestEssays', () => {
+    const q = QUESTIONS[state.currentQ];
+    if (!q || q.type !== 'essayvote') return;
+    const order = state.essayOrder || Object.keys(essays);
+    socket.emit('essayData', order.map(name => ({ name, text: essays[name] ? essays[name].text : '' })));
+  });
+
   /* Disconnect */
   socket.on('disconnect', () => {
     const name = socketToName[socket.id];
     if (name && players[name]) players[name].socketId = null;
+    verifiedSockets.delete(socket.id);
     delete socketToName[socket.id];
     io.emit('player:count', { count: Object.keys(players).filter(n => players[n].socketId).length });
     console.log('Disconnected:', socket.id);

@@ -100,16 +100,23 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 .confetti{position:absolute;width:10px;height:10px;top:-10px;animation:confettiFall linear forwards;}
 @keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);}}
 
+.room-code-display{font-size:48px;font-weight:900;letter-spacing:12px;color:var(--cyan);background:var(--card-solid);border:2px solid rgba(6,182,212,0.3);border-radius:16px;padding:16px 32px;text-align:center;font-family:'Inter',monospace;}
+
+.code-input{font-size:48px;font-weight:900;letter-spacing:12px;text-transform:uppercase;text-align:center;background:rgba(0,0,0,0.25);border:2px solid rgba(255,255,255,0.15);color:var(--text);border-radius:16px;padding:16px 32px;width:100%;max-width:360px;outline:none;font-family:'Inter',monospace;}
+.code-input:focus{border-color:var(--cyan);box-shadow:0 0 20px rgba(6,182,212,0.3);}
+
 @media(max-width:600px){
   .title-glow{font-size:1.6rem;}
   .btn{padding:12px 20px;font-size:14px;}
   .cw{padding:12px;}
+  .room-code-display{font-size:36px;letter-spacing:8px;padding:12px 24px;}
+  .code-input{font-size:36px;letter-spacing:8px;padding:12px 24px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ ROLE SELECT ═══ -->
+<!-- ROLE SELECT -->
 <div id="roleSelect" class="screen active">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:6vh;">
     <h1 class="title-glow" style="font-size:2.6rem;margin-bottom:4px;">DRRM Quiz Challenge</h1>
@@ -122,7 +129,19 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT NAME PICK ═══ -->
+<!-- STUDENT ROOM CODE -->
+<div id="codeEntry" class="screen">
+  <div class="cw narrow fade-in" style="text-align:center;">
+    <h2 style="margin-bottom:8px;">Enter Room Code</h2>
+    <p class="muted" style="margin-bottom:20px;">Ask the host for the 4-letter code shown on screen.</p>
+    <input class="code-input" type="text" id="codeInput" maxlength="4" placeholder="----" autocomplete="off" spellcheck="false">
+    <p id="codeError" style="color:var(--danger);margin-top:10px;min-height:20px;font-size:14px;"></p>
+    <button class="btn btn-emerald" style="margin-top:12px;width:100%;" onclick="submitCode()">Join Room</button>
+    <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="showScreen('roleSelect')">Go Back</button>
+  </div>
+</div>
+
+<!-- STUDENT NAME PICK -->
 <div id="namePick" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;">
     <h2 style="margin-bottom:16px;">Who are you?</h2>
@@ -130,7 +149,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ AVATAR MODAL ═══ -->
+<!-- AVATAR MODAL -->
 <div class="modal-bg" id="avatarModal" style="display:none;">
   <div class="glass fade-in" style="padding:24px;width:100%;max-width:400px;">
     <h3 style="margin-bottom:4px;">Draw your avatar!</h3>
@@ -143,30 +162,34 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
       <button class="btn btn-outline btn-sm" style="flex:1;" onclick="avSize(12)">Large</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <button class="btn btn-outline btn-sm" style="flex:1;" onclick="avUndo()">↩ Undo</button>
+      <button class="btn btn-outline btn-sm" style="flex:1;" onclick="avUndo()">Undo</button>
       <button class="btn btn-outline btn-sm" style="flex:1;" onclick="avClear()">Clear</button>
     </div>
     <button class="btn btn-emerald" style="width:100%;" onclick="saveAvatar()">Save Avatar</button>
   </div>
 </div>
 
-<!-- ═══ STUDENT WAITING ═══ -->
+<!-- STUDENT WAITING -->
 <div id="waiting" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:10vh;">
     <div class="glass" style="padding:36px;">
       <h2>Hey, <span id="waitName"></span>!</h2>
       <p class="muted">Waiting for host to start the game...</p>
-      <div style="font-size:40px;margin-top:16px;" class="muted" style="animation:pulse 1.5s infinite;">⏳</div>
+      <div style="font-size:40px;margin-top:16px;" class="muted">&#9203;</div>
     </div>
   </div>
 </div>
 
-<!-- ═══ HOST LOBBY ═══ -->
+<!-- HOST LOBBY -->
 <div id="hostLobby" class="screen">
   <div class="cw fade-in">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <h1 class="title-glow">DRRM Quiz Arena — Lobby</h1>
+      <h1 class="title-glow">DRRM Quiz Arena</h1>
       <span class="pill" id="lobbyCount">0 students joined</span>
+    </div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <p class="muted" style="font-size:13px;text-transform:uppercase;margin-bottom:6px;">Room Code</p>
+      <div class="room-code-display" id="hostRoomCode">----</div>
     </div>
     <div class="glass" style="padding:20px;">
       <div id="lobbyGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;"></div>
@@ -178,7 +201,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ HOST QUESTION ═══ -->
+<!-- HOST QUESTION -->
 <div id="hostQuestion" class="screen">
   <div class="cw fade-in">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -194,7 +217,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ HOST REVEAL ═══ -->
+<!-- HOST REVEAL -->
 <div id="hostReveal" class="screen">
   <div class="cw fade-in">
     <h2 style="margin-bottom:6px;" id="hrTitle">Round 1 Results</h2>
@@ -208,7 +231,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ HOST LEADERBOARD ═══ -->
+<!-- HOST LEADERBOARD -->
 <div id="hostLeaderboard" class="screen">
   <div class="cw fade-in">
     <h1 class="title-glow" style="margin-bottom:20px;">Leaderboard</h1>
@@ -221,7 +244,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ HOST FINAL ═══ -->
+<!-- HOST FINAL -->
 <div id="hostFinal" class="screen">
   <div class="cw fade-in" style="text-align:center;">
     <h1 class="title-glow" style="font-size:2.6rem;margin-bottom:20px;">Final Results</h1>
@@ -233,7 +256,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT QUESTION ═══ -->
+<!-- STUDENT QUESTION -->
 <div id="studentQuestion" class="screen">
   <div class="cw narrow fade-in" style="overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
@@ -246,11 +269,11 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT LOCKED ═══ -->
+<!-- STUDENT LOCKED -->
 <div id="studentLocked" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:12vh;">
     <div class="glass" style="padding:36px;">
-      <div style="font-size:44px;">🔒</div>
+      <div style="font-size:44px;">&#128274;</div>
       <h3 style="margin-top:10px;">Answer locked in!</h3>
       <p class="muted">Waiting for other students...</p>
       <div class="timerbar" style="margin-top:16px;"><div class="fill" id="slBar"></div></div>
@@ -259,7 +282,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT REVEAL ═══ -->
+<!-- STUDENT REVEAL -->
 <div id="studentReveal" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:10vh;">
     <div class="glass" style="padding:36px;">
@@ -270,7 +293,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT LEADERBOARD ═══ -->
+<!-- STUDENT LEADERBOARD -->
 <div id="studentLeaderboard" class="screen">
   <div class="cw narrow fade-in">
     <h2 style="text-align:center;margin-bottom:14px;">Leaderboard</h2>
@@ -283,7 +306,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
   </div>
 </div>
 
-<!-- ═══ STUDENT FINAL ═══ -->
+<!-- STUDENT FINAL -->
 <div id="studentFinal" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:8vh;">
     <div class="glass" style="padding:34px;">
@@ -297,20 +320,16 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-/* ═══════════════════════════════════════════════════
-   DRRM QUIZ ARENA — HOST + STUDENT CONTROLLER
-   ═══════════════════════════════════════════════════ */
 const socket = io();
 
-/* ── Global state ──────────────────────────────────── */
-let ROLE = null;         // 'host' | 'student'
+let ROLE = null;
 let MY_NAME = null;
-let GS = {};             // latest game state from server
+let GS = {};
 let MY_AVATAR = null;
-let locked = false;      // has this device submitted?
+let locked = false;
+let myVerified = false;
 
-/* ── Screen management ─────────────────────────────── */
-const screens = ['roleSelect','namePick','waiting','hostLobby','hostQuestion','hostReveal','hostLeaderboard','hostFinal','studentQuestion','studentLocked','studentReveal','studentLeaderboard','studentFinal'];
+const screens = ['roleSelect','codeEntry','namePick','waiting','hostLobby','hostQuestion','hostReveal','hostLeaderboard','hostFinal','studentQuestion','studentLocked','studentReveal','studentLeaderboard','studentFinal'];
 function showScreen(id) {
   screens.forEach(s => {
     const el = document.getElementById(s);
@@ -322,16 +341,43 @@ function showScreen(id) {
 function chooseRole(role) {
   ROLE = role;
   if (role === 'host') {
-    showScreen('hostLobby');
-    socket.emit('requestState');
+    socket.emit('requestHostData');
   } else {
-    socket.emit('requestRoster');
+    showScreen('codeEntry');
+    document.getElementById('codeInput').value = '';
+    document.getElementById('codeError').textContent = '';
+    setTimeout(() => document.getElementById('codeInput').focus(), 100);
   }
 }
 
+/* ═══ ROOM CODE VERIFICATION ══════════════════════════ */
+document.getElementById('codeInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitCode();
+});
+
+function submitCode() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (code.length !== 4) {
+    document.getElementById('codeError').textContent = 'Enter a 4-letter code.';
+    return;
+  }
+  socket.emit('verifyRoom', code);
+}
+
+socket.on('roomVerified', (data) => {
+  if (data.ok) {
+    myVerified = true;
+    socket.emit('requestRoster');
+  } else {
+    document.getElementById('codeError').textContent = data.error || 'Invalid code!';
+    document.getElementById('codeInput').value = '';
+    document.getElementById('codeInput').focus();
+  }
+});
+
 /* ═══ STUDENT: NAME PICK ══════════════════════════════ */
 socket.on('rosterData', (data) => {
-  if (ROLE !== 'student') return;
+  if (ROLE !== 'student' || !myVerified) return;
   const list = document.getElementById('nameList');
   list.innerHTML = '';
   data.forEach(name => {
@@ -397,7 +443,12 @@ function saveAvatar() {
 }
 
 /* ═══ HOST LOBBY ══════════════════════════════════════ */
-socket.on('playerCount', (data) => {
+socket.on('hostData', (data) => {
+  document.getElementById('hostRoomCode').textContent = data.roomCode;
+  showScreen('hostLobby');
+});
+
+socket.on('player:count', (data) => {
   if (ROLE === 'host') {
     document.getElementById('lobbyCount').textContent = data.count + ' student' + (data.count !== 1 ? 's' : '') + ' joined';
     document.getElementById('startBtn').disabled = data.count === 0;
@@ -416,7 +467,7 @@ socket.on('game:state', (data) => {
 });
 
 function route() {
-   if (!ROLE) return;
+  if (!ROLE) return;
   const p = GS.phase;
   if (ROLE === 'host') {
     if (p === 'lobby') showScreen('hostLobby');
@@ -527,7 +578,7 @@ function renderHostReveal() {
   let html = '';
   sorted.forEach(r => {
     const p = GS.players[r.name] || {};
-    const av = p.avatar ? '<img class="avatar" src="' + p.avatar + '">' : '<div class="avatar" style="display:flex;align-items:center;justify-content:center;">👤</div>';
+    const av = p.avatar ? '<img class="avatar" src="' + p.avatar + '">' : '<div class="avatar" style="display:flex;align-items:center;justify-content:center;">&#128100;</div>';
     let extra = '';
     if (r.sim !== undefined) extra = ' — ' + r.sim + '% match';
     if (r.votes !== undefined) extra = ' — ' + r.votes + ' votes';
@@ -546,12 +597,12 @@ function renderHostLeaderboard() {
     const av = p.avatar ? '<img class="avatar ' + avRank(i) + '" src="' + p.avatar + '">' : '<div class="avatar ' + avRank(i) + '"></div>';
     const prevIdx = prev.indexOf(p.name);
     let arrow = '';
-    if (prevIdx >= 0 && prevIdx > i) arrow = '<span class="arrow-up">▲ +' + (prevIdx - i) + '</span>';
-    else if (prevIdx >= 0 && prevIdx < i) arrow = '<span class="arrow-down">▼ -' + (i - prevIdx) + '</span>';
+    if (prevIdx >= 0 && prevIdx > i) arrow = '<span class="arrow-up">&#9650; +' + (prevIdx - i) + '</span>';
+    else if (prevIdx >= 0 && prevIdx < i) arrow = '<span class="arrow-down">&#9660; -' + (i - prevIdx) + '</span>';
     html += '<div class="lb-row pop"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div>' + av + '<div style="flex:1;font-weight:700;">' + p.name + '</div>' + arrow + '<div class="pill">' + p.score + ' pts</div></div>';
   });
   document.getElementById('hlList').innerHTML = html;
-  document.getElementById('hlNextBtn').textContent = GS.currentQ + 1 >= GS.totalQ ? 'View Final Results' : 'Next Question →';
+  document.getElementById('hlNextBtn').textContent = GS.currentQ + 1 >= GS.totalQ ? 'View Final Results' : 'Next Question';
 }
 
 /* ═══ HOST: FINAL ═════════════════════════════════════ */
@@ -563,7 +614,7 @@ function renderHostFinal() {
     const p = order[i];
     const h = i === 0 ? 120 : i === 1 ? 85 : 60;
     const av = p.avatar ? '<img class="avatar big ' + avRank(i) + '" src="' + p.avatar + '">' : '<div class="avatar big ' + avRank(i) + '"></div>';
-    podium += '<div class="pop" style="text-align:center;">' + av + '<div style="font-weight:800;margin-top:6px;">' + p.name + '</div><div class="muted">' + p.score + ' pts</div><div class="glass" style="width:90px;height:' + h + 'px;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:12px;">' + ['🥇','🥈','🥉'][i] + '</div></div>';
+    podium += '<div class="pop" style="text-align:center;">' + av + '<div style="font-weight:800;margin-top:6px;">' + p.name + '</div><div class="muted">' + p.score + ' pts</div><div class="glass" style="width:90px;height:' + h + 'px;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:12px;">' + ['&#127942;','&#127943;','&#127944;'][i] + '</div></div>';
   });
   document.getElementById('hfPodium').innerHTML = podium;
   let list = '';
@@ -634,29 +685,24 @@ function renderLocked() {
   showScreen('studentLocked');
 }
 
-/* ── MC submit ──────────────────────────────────────── */
 function submitMC(val) { socket.emit('answer:submit', { value: val }); locked = true; renderLocked(); }
 
-/* ── Similarity submit ──────────────────────────────── */
 function submitSimilarity() {
   const val = document.getElementById('simInput').value.trim();
   if (!val) return alert('Type something first!');
   socket.emit('answer:submit', { value: val }); locked = true; renderLocked();
 }
 
-/* ── Drag Match ─────────────────────────────────────── */
 let dmDragged = null;
 function dmDragStart(e) { dmDragged = e.target.getAttribute('data-term'); }
 function dmDrop(e, key) { e.currentTarget.classList.remove('over'); if (!dmDragged) return; e.currentTarget.textContent = dmDragged; e.currentTarget.style.background = 'rgba(16,185,129,0.15)'; window._dmSlots = window._dmSlots || {}; window._dmSlots[key] = dmDragged; const chip = document.querySelector('#dmPool [data-term="' + dmDragged + '"]'); if (chip) chip.remove(); }
 function dmSubmit() { const s = window._dmSlots || {}; if (!s.A || !s.B || !s.C) return alert('Fill all slots!'); socket.emit('answer:submit', { value: { A: s.A, B: s.B, C: s.C } }); locked = true; renderLocked(); }
 
-/* ── Drag Classify ──────────────────────────────────── */
 let dcDragged = null;
 function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); }
 function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDragged; holder.appendChild(chip); } }
 function dcSubmit() { socket.emit('answer:submit', { value: window._dcBuckets || {} }); locked = true; renderLocked(); }
 
-/* ── Hotspot ────────────────────────────────────────── */
 function hsClick(id) {
   const el = document.getElementById('hs_' + id);
   if (!el || el.classList.contains('found')) return;
@@ -668,14 +714,13 @@ function hsClick(id) {
   }
 }
 
-/* ── Swipe ──────────────────────────────────────────── */
 function renderSwipeCard(q) {
   const area = document.getElementById('swipeArea'); if (!area) return;
   if (window._swipeIdx >= q.cards.length) { socket.emit('answer:submit', { value: { correctCount: window._swipeCorrect } }); locked = true; renderLocked(); return; }
   const card = q.cards[window._swipeIdx];
   area.innerHTML = '<p class="muted" style="text-align:center;margin-bottom:8px;">Card ' + (window._swipeIdx + 1) + '/' + q.cards.length + '</p>' +
     '<div style="display:flex;justify-content:center;margin:16px 0;"><div class="swipe-card-inner pop">' + card.text + '</div></div>' +
-    '<div style="display:flex;gap:10px;"><button class="btn btn-danger" style="flex:1;" onclick="swipePick(\'left\')">◀ Vulnerability</button><button class="btn btn-emerald" style="flex:1;" onclick="swipePick(\'right\')">Capacity ▶</button></div>';
+    '<div style="display:flex;gap:10px;"><button class="btn btn-danger" style="flex:1;" onclick="swipePick(\'left\')">Vulnerability</button><button class="btn btn-emerald" style="flex:1;" onclick="swipePick(\'right\')">Capacity</button></div>';
 }
 function swipePick(dir) {
   const q = GS.qData;
@@ -684,7 +729,6 @@ function swipePick(dir) {
   renderSwipeCard(q);
 }
 
-/* ── Drag Rank ──────────────────────────────────────── */
 function renderRankUI(q) {
   const area = document.getElementById('rankArea'); if (!area) return;
   const order = window._rankOrder;
@@ -692,8 +736,8 @@ function renderRankUI(q) {
   order.slice().reverse().forEach(key => {
     const item = q.items.find(i => i.key === key);
     html += '<div class="glass" style="padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;"><div style="flex:1;font-size:14px;">' + item.text + '</div>' +
-      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',-1)">⬆</button>' +
-      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',1)">⬇</button></div>';
+      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',-1)">Up</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',1)">Down</button></div>';
   });
   html += '<button class="btn btn-emerald" style="width:100%;margin-top:8px;" onclick="rankSubmit()">Submit Ranking</button>';
   area.innerHTML = html;
@@ -707,7 +751,6 @@ function rankMove(key, dir) {
 }
 function rankSubmit() { socket.emit('answer:submit', { value: { order: window._rankOrder } }); locked = true; renderLocked(); }
 
-/* ── Essay submit ───────────────────────────────────── */
 function submitEssay() {
   const val = document.getElementById('essayInput').value.trim();
   if (!val) return alert('Type something!');
@@ -731,7 +774,7 @@ socket.on('essayData', (data) => {
     if (item.name === MY_NAME) return;
     const card = document.createElement('div');
     card.className = 'essay-card';
-    card.innerHTML = '<div style="font-size:14px;margin-bottom:6px;">"' + item.text + '"</div><div class="muted" style="font-size:12px;">❤️ <span id="ev_' + idx + '">0</span> votes</div>';
+    card.innerHTML = '<div style="font-size:14px;margin-bottom:6px;">"' + item.text + '"</div><div class="muted" style="font-size:12px;">&#10084; <span id="ev_' + idx + '">0</span> votes</div>';
     card.onclick = () => { socket.emit('vote:submit', { target: item.name }); locked = true; grid.querySelectorAll('.essay-card').forEach(c => c.style.pointerEvents = 'none'); card.classList.add('voted'); renderLocked(); };
     grid.appendChild(card);
   });
@@ -743,11 +786,11 @@ function renderStudentReveal() {
   const mine = results.find(r => r.name === MY_NAME);
   document.getElementById('srTitle').textContent = 'Round ' + (GS.currentQ + 1) + ' Result';
   if (mine && mine.points > 0) {
-    document.getElementById('srEmoji').textContent = '🎉';
+    document.getElementById('srEmoji').textContent = '&#127881;';
     document.getElementById('srPoints').textContent = '+' + mine.points + ' points';
     document.getElementById('srPoints').style.color = 'var(--emerald)';
   } else {
-    document.getElementById('srEmoji').textContent = '😢';
+    document.getElementById('srEmoji').textContent = '&#128548;';
     document.getElementById('srPoints').textContent = '+0 points';
     document.getElementById('srPoints').style.color = 'var(--danger)';
   }
@@ -773,8 +816,8 @@ function renderStudentFinal() {
   const order = Object.entries(GS.players).sort((a, b) => b[1].score - a[1].score).map(e => e[1]);
   const myRank = order.findIndex(p => p.name === MY_NAME) + 1;
   const myScore = (GS.players[MY_NAME] || {}).score || 0;
-  const emojis = ['🥇','🥈','🥉'];
-  document.getElementById('sfEmoji').textContent = myRank <= 3 ? emojis[myRank - 1] : '🎓';
+  const emojis = ['&#127942;','&#127943;','&#127944;'];
+  document.getElementById('sfEmoji').innerHTML = myRank <= 3 ? emojis[myRank - 1] : '&#127891;';
   document.getElementById('sfRank').textContent = 'You placed #' + myRank;
   document.getElementById('sfScore').textContent = myScore + ' total points';
   if (myRank <= 3) launchConfetti();
