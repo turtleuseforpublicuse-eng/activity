@@ -416,6 +416,7 @@ socket.on('game:state', (data) => {
 });
 
 function route() {
+   if (!ROLE) return;
   const p = GS.phase;
   if (ROLE === 'host') {
     if (p === 'lobby') showScreen('hostLobby');
