@@ -752,22 +752,24 @@ function renderStudentQuestion() {
     html += '<textarea id="simInput" rows="4" placeholder="Type your definition of vulnerability..."></textarea>';
     html += '<button class="btn btn-emerald" style="width:100%;margin-top:12px;" onclick="submitSimilarity()">Submit</button>';
   } else if (q.type === 'dragmatch') {
+    html += '<p class="muted" style="text-align:center;margin-bottom:8px;">Tap a term, then tap a slot</p>';
     html += '<div id="dmPool" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">';
     const shuffled = [...q.terms].sort(() => Math.random() - 0.5);
-    shuffled.forEach(t => { html += '<div class="drag-chip" data-term="' + t + '" onclick="dmTapSelect(this)" style="cursor:pointer;">' + t + '</div>'; });
+    shuffled.forEach(t => { html += '<div class="drag-chip" data-term="' + t + '" onclick="dmTapSelect(this)" style="cursor:pointer;border:2px solid var(--amber);transition:all .2s;">' + t + '</div>'; });
     html += '</div>';
     q.slots.forEach(s => {
       html += '<div class="glass" style="padding:10px;margin-bottom:8px;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:6px;"><b>' + s.key + '.</b> ' + s.desc + '</div>';
-      html += '<div class="dropzone" onclick="dmTapDrop(\'' + s.key + '\')" data-key="' + s.key + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dmDrop(event,\'' + s.key + '\')" style="cursor:pointer;">Drop term here</div></div>';
+      html += '<div class="dropzone" onclick="dmTapDrop(\'' + s.key + '\')" data-key="' + s.key + '" style="cursor:pointer;transition:all .2s;">Drop term here</div></div>';
     });
     html += '<button class="btn btn-emerald" style="width:100%;margin-top:10px;" onclick="dmSubmit()">Submit</button>';
   } else if (q.type === 'dragclassify') {
+    html += '<p class="muted" id="dcStatus" style="text-align:center;margin-bottom:8px;">Tap a scenario, then tap a category</p>';
     q.scenarios.forEach(s => {
-      html += '<div class="drag-chip" id="dc_' + s.key + '" style="width:100%;margin-bottom:8px;cursor:pointer;" data-key="' + s.key + '" onclick="dcTapSelect(\'' + s.key + '\',this)">' + s.text + '</div>';
+      html += '<div class="drag-chip" id="dc_' + s.key + '" style="width:100%;margin-bottom:8px;cursor:pointer;border:2px solid var(--amber);transition:all .2s;" data-key="' + s.key + '" onclick="dcTapSelect(\'' + s.key + '\',this)">' + s.text + '</div>';
     });
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">';
     q.buckets.forEach(b => {
-      html += '<div class="dropzone" style="min-height:100px;flex-direction:column;cursor:pointer;" onclick="dcTapDrop(\'' + b + '\')" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dcDrop(event,\'' + b + '\')"><b>' + b + '</b><div id="bkt_' + b.replace(/[^a-zA-Z]/g, '') + '" style="margin-top:6px;"></div></div>';
+      html += '<div class="dropzone" id="bktZone_' + b.replace(/[^a-zA-Z]/g, '') + '" style="min-height:100px;flex-direction:column;cursor:pointer;border:2px solid rgba(255,255,255,0.25);transition:all .2s;" onclick="dcTapDrop(\'' + b + '\')"><b>' + b + '</b><div id="bkt_' + b.replace(/[^a-zA-Z]/g, '') + '" style="margin-top:6px;"></div></div>';
     });
     html += '</div><button class="btn btn-emerald" style="width:100%;margin-top:10px;" onclick="dcSubmit()">Submit</button>';
   } else if (q.type === 'hotspot') {
@@ -806,7 +808,25 @@ function submitSimilarity() {
 }
 
 let dmDragged = null;
+let dmSelectedTerm = null;
 function dmDragStart(e) { dmDragged = e.target.getAttribute('data-term'); }
+function dmTapSelect(el) {
+  document.querySelectorAll('#dmPool .drag-chip').forEach(c => { c.style.borderColor = 'var(--amber)'; c.style.background = ''; c.style.transform = ''; });
+  dmSelectedTerm = el.getAttribute('data-term');
+  el.style.borderColor = 'var(--emerald)';
+  el.style.background = 'rgba(16,185,129,0.25)';
+  el.style.transform = 'scale(1.05)';
+}
+function dmTapDrop(key) {
+  if (!dmSelectedTerm) return;
+  window._dmSlots = window._dmSlots || {};
+  window._dmSlots[key] = dmSelectedTerm;
+  const zone = document.querySelector('.dropzone[data-key="' + key + '"]');
+  if (zone) { zone.textContent = dmSelectedTerm; zone.style.background = 'rgba(16,185,129,0.15)'; zone.style.borderColor = 'var(--emerald)'; }
+  const chip = document.querySelector('#dmPool [data-term="' + dmSelectedTerm + '"]');
+  if (chip) chip.style.display = 'none';
+  dmSelectedTerm = null;
+}
 function dmDrop(e, key) { e.currentTarget.classList.remove('over'); if (!dmDragged) return; e.currentTarget.textContent = dmDragged; e.currentTarget.style.background = 'rgba(16,185,129,0.15)'; window._dmSlots = window._dmSlots || {}; window._dmSlots[key] = dmDragged; const chip = document.querySelector('#dmPool [data-term="' + dmDragged + '"]'); if (chip) chip.remove(); }
 function dmSubmit() { const s = window._dmSlots || {}; if (!s.A || !s.B || !s.C) return alert('Fill all slots!'); socket.emit('answer:submit', { value: { A: s.A, B: s.B, C: s.C } }); locked = true; renderLocked(); }
 
@@ -815,17 +835,21 @@ let dcDraggedText = '';
 let dcSelectedKey = null;
 function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); dcDraggedText = e.target.textContent; }
 function dcTapSelect(key, el) {
-  document.querySelectorAll('#sqBody .drag-chip').forEach(c => c.style.borderColor = 'var(--amber)');
+  document.querySelectorAll('#sqBody .drag-chip').forEach(c => { c.style.borderColor = 'var(--amber)'; c.style.background = ''; c.style.transform = ''; });
   dcSelectedKey = key;
   dcDraggedText = el.textContent;
   el.style.borderColor = 'var(--emerald)';
   el.style.background = 'rgba(16,185,129,0.25)';
+  el.style.transform = 'scale(1.02)';
+  const status = document.getElementById('dcStatus');
+  if (status) status.textContent = 'Now tap a category to place: "' + dcDraggedText.substring(0, 30) + '..."';
+  document.querySelectorAll('.dropzone').forEach(dz => { dz.style.borderColor = 'var(--cyan)'; dz.style.background = 'rgba(6,182,212,0.08)'; });
 }
 function dcTapDrop(bucket) {
   if (!dcSelectedKey) return;
   window._dcBuckets = window._dcBuckets || {};
   window._dcBuckets[dcSelectedKey] = bucket;
-  const holder = document.querySelector('#bkt_' + bucket.replace(/[^a-zA-Z]/g, '') + '');
+  const holder = document.getElementById('bkt_' + bucket.replace(/[^a-zA-Z]/g, ''));
   if (holder) {
     const chip = document.createElement('div');
     chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;';
@@ -833,9 +857,13 @@ function dcTapDrop(bucket) {
     holder.appendChild(chip);
   }
   const src = document.getElementById('dc_' + dcSelectedKey);
-  if (src) src.style.display = 'none';
+  if (src) { src.style.display = 'none'; }
   dcSelectedKey = null;
   dcDraggedText = '';
+  document.querySelectorAll('.dropzone').forEach(dz => { dz.style.borderColor = ''; dz.style.background = ''; });
+  const status = document.getElementById('dcStatus');
+  const remaining = document.querySelectorAll('#sqBody .drag-chip:not([style*="display: none"])').length;
+  if (status) status.textContent = remaining > 0 ? 'Tap a scenario, then tap a category' : 'All placed! Hit Submit.';
 }
 function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDraggedText; holder.appendChild(chip); } const src = document.getElementById('dc_' + dcDragged); if (src) src.style.display = 'none'; dcDragged = null; dcDraggedText = ''; }
 function dcSubmit() { socket.emit('answer:submit', { value: window._dcBuckets || {} }); locked = true; renderLocked(); }
