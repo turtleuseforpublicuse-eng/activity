@@ -195,6 +195,7 @@ function broadcastState() {
     timerDuration: state.timerDuration,
     phaseStart: state.phaseStart,
     totalQ: TOTAL_Q,
+    roster: ROSTER,
     players: Object.fromEntries(ROSTER.filter(n => players[n]).map(n => [n, { name: n, avatar: players[n].avatar, score: players[n].score || 0 }])),
     submittedCount: answers[state.currentQ] ? Object.keys(answers[state.currentQ]).length : 0,
     prevStandings: state.prevStandings,
