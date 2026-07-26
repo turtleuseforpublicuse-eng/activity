@@ -42,7 +42,7 @@
     },
     {
       "id": 4, "type": "dragmatch", "timer": 30,
-      "q": "Drag each term into the description it matches.",
+      "q": "Tap each term into the description it matches.",
       "terms": ["Population Size", "Spatial Distribution", "Population Density"],
       "slots": [
         {"key": "A", "desc": "The total count of individuals inhabiting a space at the exact same time (e.g., 65,000 residents)."},

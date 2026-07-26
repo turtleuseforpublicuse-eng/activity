@@ -210,7 +210,8 @@ io.on('connection', (socket) => {
 
   /* ── Room Code Verification ─────────────────────── */
   socket.on('requestRoster', () => {
-    socket.emit('rosterData', ROSTER);
+    const disconnected = ROSTER.filter(n => players[n] && !players[n].socketId);
+    socket.emit('rosterData', { roster: ROSTER, disconnected });
   });
 
   socket.on('verifyRoom', (code) => {
@@ -238,10 +239,19 @@ io.on('connection', (socket) => {
     const name = (data.name || '').trim();
     if (!name || !ROSTER.includes(name)) return socket.emit('error:msg', 'Invalid name.');
     if (players[name] && players[name].socketId) return socket.emit('error:msg', 'Name already in use on another device.');
+    if (players[name] && !players[name].socketId) {
+      players[name].socketId = socket.id;
+      players[name].avatar = data.avatar || players[name].avatar;
+      socketToName[socket.id] = name;
+      socket.emit('student:joined', { name, rejoin: true });
+      io.emit('player:count', { count: Object.keys(players).filter(n => players[n].socketId).length });
+      broadcastState();
+      return;
+    }
     players[name] = { avatar: data.avatar || null, score: players[name]?.score || 0, socketId: socket.id };
     socketToName[socket.id] = name;
     socket.emit('student:joined', { name });
-    io.emit('player:count', { count: Object.keys(players).length });
+    io.emit('player:count', { count: Object.keys(players).filter(n => players[n].socketId).length });
     broadcastState();
   });
 
