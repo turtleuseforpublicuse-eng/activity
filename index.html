@@ -111,9 +111,9 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 
 .podium-col{display:flex;flex-direction:column;align-items:center;transition:all .8s cubic-bezier(.22,1,.36,1);}
 .podium-base{display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;border-radius:14px 14px 0 0;margin-top:8px;transition:height .8s cubic-bezier(.22,1,.36,1);}
-.podium-base.gold{background:linear-gradient(180deg,rgba(255,215,0,0.3),rgba(255,215,0,0.08));border:2px solid rgba(255,215,0,0.4);border-bottom:none;}
-.podium-base.silver{background:linear-gradient(180deg,rgba(192,192,192,0.3),rgba(192,192,192,0.08));border:2px solid rgba(192,192,192,0.4);border-bottom:none;}
-.podium-base.bronze{background:linear-gradient(180deg,rgba(205,127,50,0.3),rgba(205,127,50,0.08));border:2px solid rgba(205,127,50,0.4);border-bottom:none;}
+.podium-base.gold{background:linear-gradient(180deg,#FFD700,#B8860B);border:2px solid #FFD700;border-bottom:none;color:#3a2c00;box-shadow:0 0 20px rgba(255,215,0,0.4);}
+.podium-base.silver{background:linear-gradient(180deg,#E8E8E8,#A0A0A0);border:2px solid #C0C0C0;border-bottom:none;color:#2a2a2a;box-shadow:0 0 20px rgba(192,192,192,0.4);}
+.podium-base.bronze{background:linear-gradient(180deg,#CD7F32,#8B4513);border:2px solid #CD7F32;border-bottom:none;color:#2a1200;box-shadow:0 0 20px rgba(205,127,50,0.4);}
 
 .winner-crown{animation:crownBounce 1s ease infinite;}
 @keyframes crownBounce{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-8px) scale(1.1);}}
@@ -554,8 +554,31 @@ function tickTimer() {
       const el = document.getElementById(id);
       if (el) el.textContent = Math.ceil(remaining) + 's remaining';
     });
-    if (remaining <= 0) clearInterval(timerInterval);
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      autoSubmitOnTimeout();
+    }
   }, 300);
+}
+
+function autoSubmitOnTimeout() {
+  if (locked || ROLE !== 'student') return;
+  const q = GS.qData; if (!q) return;
+  if (q.type === 'similarity') {
+    const el = document.getElementById('simInput');
+    if (el && el.value.trim()) {
+      socket.emit('answer:submit', { value: el.value.trim() });
+      locked = true;
+      renderLocked();
+    }
+  } else if (q.type === 'essayvote') {
+    const el = document.getElementById('essayInput');
+    if (el && el.value.trim()) {
+      socket.emit('essay:submit', { text: el.value.trim() });
+      locked = true;
+      renderLocked();
+    }
+  }
 }
 
 /* ═══ HOST: QUESTION ══════════════════════════════════ */
@@ -694,14 +717,14 @@ function renderHostFinal() {
     if (!order[rank]) return;
     const p = order[rank];
     const heights = [160, 110, 80];
-    const h = heights[visualIdx];
+    const h = heights[rank];
     const classes = ['gold', 'silver', 'bronze'];
     const medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
     const medal = medals[rank];
     const crown = rank === 0 ? '<div class="winner-crown" style="font-size:32px;margin-bottom:4px;">\uD83D\uDC51</div>' : '';
     const avClass = rank === 0 ? 'avatar big winner-glow ' + avRank(rank) : 'avatar big ' + avRank(rank);
     const av = p.avatar ? '<img class="' + avClass + '" src="' + p.avatar + '">' : '<div class="' + avClass + '"></div>';
-    podium += '<div class="podium-col" style="animation:fadeIn .6s ease ' + (visualIdx * 0.2) + 's both;">' + crown + av + '<div style="font-weight:800;margin-top:6px;font-size:' + (rank === 0 ? '18px' : '15px') + ';">' + p.name + '</div><div class="muted" style="font-size:13px;">' + p.score + ' pts</div><div class="podium-base ' + classes[visualIdx] + '" style="width:' + (120 - visualIdx * 20) + 'px;height:' + h + 'px;">' + medal + '</div></div>';
+    podium += '<div class="podium-col" style="animation:fadeIn .6s ease ' + (visualIdx * 0.2) + 's both;">' + crown + av + '<div style="font-weight:800;margin-top:6px;font-size:' + (rank === 0 ? '18px' : '15px') + ';">' + p.name + '</div><div class="muted" style="font-size:13px;">' + p.score + ' pts</div><div class="podium-base ' + classes[rank] + '" style="width:' + (140 - rank * 20) + 'px;height:' + h + 'px;">' + medal + '</div></div>';
   });
   document.getElementById('hfPodium').innerHTML = podium;
   let list = '';
@@ -731,20 +754,20 @@ function renderStudentQuestion() {
   } else if (q.type === 'dragmatch') {
     html += '<div id="dmPool" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">';
     const shuffled = [...q.terms].sort(() => Math.random() - 0.5);
-    shuffled.forEach(t => { html += '<div class="drag-chip" draggable="true" data-term="' + t + '" ondragstart="dmDragStart(event)">' + t + '</div>'; });
+    shuffled.forEach(t => { html += '<div class="drag-chip" data-term="' + t + '" onclick="dmTapSelect(this)" style="cursor:pointer;">' + t + '</div>'; });
     html += '</div>';
     q.slots.forEach(s => {
       html += '<div class="glass" style="padding:10px;margin-bottom:8px;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:6px;"><b>' + s.key + '.</b> ' + s.desc + '</div>';
-      html += '<div class="dropzone" data-key="' + s.key + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dmDrop(event,\'' + s.key + '\')">Drop term here</div></div>';
+      html += '<div class="dropzone" onclick="dmTapDrop(\'' + s.key + '\')" data-key="' + s.key + '" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dmDrop(event,\'' + s.key + '\')" style="cursor:pointer;">Drop term here</div></div>';
     });
     html += '<button class="btn btn-emerald" style="width:100%;margin-top:10px;" onclick="dmSubmit()">Submit</button>';
   } else if (q.type === 'dragclassify') {
     q.scenarios.forEach(s => {
-      html += '<div class="drag-chip" id="dc_' + s.key + '" style="width:100%;margin-bottom:8px;" draggable="true" data-key="' + s.key + '" ondragstart="dcDragStart(event)">' + s.text + '</div>';
+      html += '<div class="drag-chip" id="dc_' + s.key + '" style="width:100%;margin-bottom:8px;cursor:pointer;" data-key="' + s.key + '" onclick="dcTapSelect(\'' + s.key + '\',this)">' + s.text + '</div>';
     });
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">';
     q.buckets.forEach(b => {
-      html += '<div class="dropzone" style="min-height:100px;flex-direction:column;" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dcDrop(event,\'' + b + '\')"><b>' + b + '</b><div id="bkt_' + b.replace(/[^a-zA-Z]/g, '') + '" style="margin-top:6px;"></div></div>';
+      html += '<div class="dropzone" style="min-height:100px;flex-direction:column;cursor:pointer;" onclick="dcTapDrop(\'' + b + '\')" ondragover="event.preventDefault();this.classList.add(\'over\')" ondragleave="this.classList.remove(\'over\')" ondrop="dcDrop(event,\'' + b + '\')"><b>' + b + '</b><div id="bkt_' + b.replace(/[^a-zA-Z]/g, '') + '" style="margin-top:6px;"></div></div>';
     });
     html += '</div><button class="btn btn-emerald" style="width:100%;margin-top:10px;" onclick="dcSubmit()">Submit</button>';
   } else if (q.type === 'hotspot') {
@@ -789,7 +812,31 @@ function dmSubmit() { const s = window._dmSlots || {}; if (!s.A || !s.B || !s.C)
 
 let dcDragged = null;
 let dcDraggedText = '';
+let dcSelectedKey = null;
 function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); dcDraggedText = e.target.textContent; }
+function dcTapSelect(key, el) {
+  document.querySelectorAll('#sqBody .drag-chip').forEach(c => c.style.borderColor = 'var(--amber)');
+  dcSelectedKey = key;
+  dcDraggedText = el.textContent;
+  el.style.borderColor = 'var(--emerald)';
+  el.style.background = 'rgba(16,185,129,0.25)';
+}
+function dcTapDrop(bucket) {
+  if (!dcSelectedKey) return;
+  window._dcBuckets = window._dcBuckets || {};
+  window._dcBuckets[dcSelectedKey] = bucket;
+  const holder = document.querySelector('#bkt_' + bucket.replace(/[^a-zA-Z]/g, '') + '');
+  if (holder) {
+    const chip = document.createElement('div');
+    chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;';
+    chip.textContent = dcDraggedText;
+    holder.appendChild(chip);
+  }
+  const src = document.getElementById('dc_' + dcSelectedKey);
+  if (src) src.style.display = 'none';
+  dcSelectedKey = null;
+  dcDraggedText = '';
+}
 function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDraggedText; holder.appendChild(chip); } const src = document.getElementById('dc_' + dcDragged); if (src) src.style.display = 'none'; dcDragged = null; dcDraggedText = ''; }
 function dcSubmit() { socket.emit('answer:submit', { value: window._dcBuckets || {} }); locked = true; renderLocked(); }
 
@@ -826,8 +873,8 @@ function renderRankUI(q) {
   order.slice().reverse().forEach(key => {
     const item = q.items.find(i => i.key === key);
     html += '<div class="glass" style="padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;"><div style="flex:1;font-size:14px;">' + item.text + '</div>' +
-      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',-1)">Up</button>' +
-      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',1)">Down</button></div>';
+      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',1)" style="min-width:40px;">\u25B2</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="rankMove(\'' + key + '\',-1)" style="min-width:40px;">\u25BC</button></div>';
   });
   html += '<button class="btn btn-emerald" style="width:100%;margin-top:8px;" onclick="rankSubmit()">Submit Ranking</button>';
   area.innerHTML = html;
