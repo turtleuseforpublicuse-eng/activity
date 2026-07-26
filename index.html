@@ -100,6 +100,30 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 .confetti{position:absolute;width:10px;height:10px;top:-10px;animation:confettiFall linear forwards;}
 @keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);}}
 
+.score-pop{animation:scorePop .6s cubic-bezier(.34,1.56,.64,1);}
+@keyframes scorePop{0%{transform:scale(1);}30%{transform:scale(1.4);color:var(--emerald);}100%{transform:scale(1);}}
+
+.overtake-flash{animation:overTakeFlash 1.2s ease;}
+@keyframes overTakeFlash{0%{background:rgba(16,185,129,0.4);transform:scale(1.03);}100%{background:rgba(255,255,255,0.05);transform:scale(1);}}
+
+.rank-up-burst{animation:rankBurst .8s ease;}
+@keyframes rankBurst{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.6);}50%{box-shadow:0 0 20px 8px rgba(16,185,129,0.3);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+
+.podium-col{display:flex;flex-direction:column;align-items:center;transition:all .8s cubic-bezier(.22,1,.36,1);}
+.podium-base{display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;border-radius:14px 14px 0 0;margin-top:8px;transition:height .8s cubic-bezier(.22,1,.36,1);}
+.podium-base.gold{background:linear-gradient(180deg,rgba(255,215,0,0.3),rgba(255,215,0,0.08));border:2px solid rgba(255,215,0,0.4);border-bottom:none;}
+.podium-base.silver{background:linear-gradient(180deg,rgba(192,192,192,0.3),rgba(192,192,192,0.08));border:2px solid rgba(192,192,192,0.4);border-bottom:none;}
+.podium-base.bronze{background:linear-gradient(180deg,rgba(205,127,50,0.3),rgba(205,127,50,0.08));border:2px solid rgba(205,127,50,0.4);border-bottom:none;}
+
+.winner-crown{animation:crownBounce 1s ease infinite;}
+@keyframes crownBounce{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-8px) scale(1.1);}}
+
+.winner-glow{animation:winnerGlow 2s ease-in-out infinite alternate;}
+@keyframes winnerGlow{from{box-shadow:0 0 30px rgba(255,215,0,0.4),0 0 60px rgba(255,215,0,0.2);}to{box-shadow:0 0 50px rgba(255,215,0,0.7),0 0 100px rgba(255,215,0,0.3);}}
+
+.points-fly{animation:pointsFly 1s ease-out forwards;position:absolute;pointer-events:none;font-weight:900;font-size:18px;color:var(--emerald);z-index:10;}
+@keyframes pointsFly{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-40px) scale(1.3);}}
+
 .room-code-display{font-size:48px;font-weight:900;letter-spacing:12px;color:var(--cyan);background:var(--card-solid);border:2px solid rgba(6,182,212,0.3);border-radius:16px;padding:16px 32px;text-align:center;font-family:'Inter',monospace;}
 
 .code-input{font-size:48px;font-weight:900;letter-spacing:12px;text-transform:uppercase;text-align:center;background:rgba(0,0,0,0.25);border:2px solid rgba(255,255,255,0.15);color:var(--text);border-radius:16px;padding:16px 32px;width:100%;max-width:360px;outline:none;font-family:'Inter',monospace;}
@@ -175,7 +199,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
     <div class="glass" style="padding:36px;">
       <h2>Hey, <span id="waitName"></span>!</h2>
       <p class="muted">Waiting for host to start the game...</p>
-      <div style="font-size:40px;margin-top:16px;" class="muted">&#9203;</div>
+      <div style="font-size:40px;margin-top:16px;" class="muted">\u231B</div>
     </div>
   </div>
 </div>
@@ -273,7 +297,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 <div id="studentLocked" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:12vh;">
     <div class="glass" style="padding:36px;">
-      <div style="font-size:44px;">&#128274;</div>
+      <div style="font-size:44px;">\uD83D\uDD12</div>
       <h3 style="margin-top:10px;">Answer locked in!</h3>
       <p class="muted">Waiting for other students...</p>
       <div class="timerbar" style="margin-top:16px;"><div class="fill" id="slBar"></div></div>
@@ -456,7 +480,7 @@ socket.on('player:count', (data) => {
 });
 
 function hostStart() { socket.emit('host:start'); }
-function hostReset() { if (confirm('Reset the entire game?')) socket.emit('host:reset'); }
+function hostReset() { if (confirm('Reset the entire game?')) { prevScores = {}; prevRankings = []; myPrevScore = 0; socket.emit('host:reset'); } }
 
 /* ═══ GAME STATE UPDATE ═══════════════════════════════ */
 socket.on('game:state', (data) => {
@@ -578,7 +602,7 @@ function renderHostReveal() {
   let html = '';
   sorted.forEach(r => {
     const p = GS.players[r.name] || {};
-    const av = p.avatar ? '<img class="avatar" src="' + p.avatar + '">' : '<div class="avatar" style="display:flex;align-items:center;justify-content:center;">&#128100;</div>';
+    const av = p.avatar ? '<img class="avatar" src="' + p.avatar + '">' : '<div class="avatar" style="display:flex;align-items:center;justify-content:center;">\uD83D\uDC64</div>';
     let extra = '';
     if (r.sim !== undefined) extra = ' — ' + r.sim + '% match';
     if (r.votes !== undefined) extra = ' — ' + r.votes + ' votes';
@@ -589,6 +613,8 @@ function renderHostReveal() {
 }
 
 /* ═══ HOST: LEADERBOARD ═══════════════════════════════ */
+let prevScores = {};
+let prevRankings = [];
 function renderHostLeaderboard() {
   const order = Object.entries(GS.players).sort((a, b) => b[1].score - a[1].score).map(e => e[1]);
   const prev = GS.prevStandings || [];
@@ -596,31 +622,76 @@ function renderHostLeaderboard() {
   order.forEach((p, i) => {
     const av = p.avatar ? '<img class="avatar ' + avRank(i) + '" src="' + p.avatar + '">' : '<div class="avatar ' + avRank(i) + '"></div>';
     const prevIdx = prev.indexOf(p.name);
+    const oldScore = prevScores[p.name] || 0;
+    const scoreDiff = p.score - oldScore;
+    const rankUp = prevIdx >= 0 && prevIdx > i;
+    const rankDown = prevIdx >= 0 && prevIdx < i;
     let arrow = '';
-    if (prevIdx >= 0 && prevIdx > i) arrow = '<span class="arrow-up">&#9650; +' + (prevIdx - i) + '</span>';
-    else if (prevIdx >= 0 && prevIdx < i) arrow = '<span class="arrow-down">&#9660; -' + (i - prevIdx) + '</span>';
-    html += '<div class="lb-row pop"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div>' + av + '<div style="flex:1;font-weight:700;">' + p.name + '</div>' + arrow + '<div class="pill">' + p.score + ' pts</div></div>';
+    let rowClass = 'lb-row pop';
+    if (rankUp) {
+      arrow = '<span class="arrow-up">\u25B2 +' + (prevIdx - i) + '</span>';
+      rowClass += ' overtake-flash rank-up-burst';
+    } else if (rankDown) {
+      arrow = '<span class="arrow-down">\u25BC -' + (i - prevIdx) + '</span>';
+    }
+    const scoreId = 'score_' + p.name.replace(/\s/g, '_');
+    html += '<div class="' + rowClass + '"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div>' + av + '<div style="flex:1;font-weight:700;">' + p.name + '</div>' + arrow + '<div class="pill" id="' + scoreId + '" data-target="' + p.score + '" data-old="' + oldScore + '">' + oldScore + ' pts</div></div>';
   });
   document.getElementById('hlList').innerHTML = html;
   document.getElementById('hlNextBtn').textContent = GS.currentQ + 1 >= GS.totalQ ? 'View Final Results' : 'Next Question';
+  animateScores();
+  prevRankings = order.map(p => p.name);
+}
+
+function animateScores() {
+  document.querySelectorAll('[id^="score_"]').forEach(el => {
+    const target = parseInt(el.getAttribute('data-target'));
+    const start = parseInt(el.getAttribute('data-old'));
+    if (target === start) return;
+    const diff = target - start;
+    const steps = Math.min(Math.abs(diff), 20);
+    const stepTime = 400 / steps;
+    let current = start;
+    let step = 0;
+    const iv = setInterval(() => {
+      step++;
+      current = Math.round(start + (diff * step) / steps);
+      el.textContent = current + ' pts';
+      if (step >= steps) {
+        clearInterval(iv);
+        el.textContent = target + ' pts';
+        el.classList.add('score-pop');
+        setTimeout(() => el.classList.remove('score-pop'), 600);
+      }
+    }, stepTime);
+  });
+  Object.entries(GS.players).forEach(([name, p]) => { prevScores[name] = p.score; });
 }
 
 /* ═══ HOST: FINAL ═════════════════════════════════════ */
 function renderHostFinal() {
   const order = Object.entries(GS.players).sort((a, b) => b[1].score - a[1].score).map(e => e[1]);
   let podium = '';
-  [1, 0, 2].forEach(i => {
-    if (!order[i]) return;
-    const p = order[i];
-    const h = i === 0 ? 120 : i === 1 ? 85 : 60;
-    const av = p.avatar ? '<img class="avatar big ' + avRank(i) + '" src="' + p.avatar + '">' : '<div class="avatar big ' + avRank(i) + '"></div>';
-    podium += '<div class="pop" style="text-align:center;">' + av + '<div style="font-weight:800;margin-top:6px;">' + p.name + '</div><div class="muted">' + p.score + ' pts</div><div class="glass" style="width:90px;height:' + h + 'px;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:24px;border-radius:12px;">' + ['&#127942;','&#127943;','&#127944;'][i] + '</div></div>';
+  const podiumOrder = [1, 0, 2];
+  podiumOrder.forEach((rank, visualIdx) => {
+    if (!order[rank]) return;
+    const p = order[rank];
+    const heights = [160, 110, 80];
+    const h = heights[visualIdx];
+    const classes = ['gold', 'silver', 'bronze'];
+    const medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+    const crown = rank === 0 ? '<div class="winner-crown" style="font-size:32px;margin-bottom:4px;">\uD83D\uDC51</div>' : '';
+    const avClass = rank === 0 ? 'avatar big winner-glow ' + avRank(rank) : 'avatar big ' + avRank(rank);
+    const av = p.avatar ? '<img class="' + avClass + '" src="' + p.avatar + '">' : '<div class="' + avClass + '"></div>';
+    podium += '<div class="podium-col" style="animation:fadeIn .6s ease ' + (visualIdx * 0.2) + 's both;">' + crown + av + '<div style="font-weight:800;margin-top:6px;font-size:' + (rank === 0 ? '18px' : '15px') + ';">' + p.name + '</div><div class="muted" style="font-size:13px;">' + p.score + ' pts</div><div class="podium-base ' + classes[visualIdx] + '" style="width:' + (120 - visualIdx * 20) + 'px;height:' + h + 'px;">' + medals[visualIdx] + '</div></div>';
   });
   document.getElementById('hfPodium').innerHTML = podium;
   let list = '';
   order.forEach((p, i) => { list += '<div class="lb-row"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div><div style="flex:1;font-weight:600;">' + p.name + '</div><div class="pill">' + p.score + ' pts</div></div>'; });
   document.getElementById('hfList').innerHTML = list;
   launchConfetti();
+  setTimeout(() => launchConfetti(), 1500);
+  setTimeout(() => launchConfetti(), 3000);
 }
 
 /* ═══ STUDENT: QUESTION ═══════════════════════════════ */
@@ -699,8 +770,9 @@ function dmDrop(e, key) { e.currentTarget.classList.remove('over'); if (!dmDragg
 function dmSubmit() { const s = window._dmSlots || {}; if (!s.A || !s.B || !s.C) return alert('Fill all slots!'); socket.emit('answer:submit', { value: { A: s.A, B: s.B, C: s.C } }); locked = true; renderLocked(); }
 
 let dcDragged = null;
-function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); }
-function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDragged; holder.appendChild(chip); } }
+let dcDraggedText = '';
+function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); dcDraggedText = e.target.textContent; }
+function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDraggedText; holder.appendChild(chip); } dcDragged = null; dcDraggedText = ''; }
 function dcSubmit() { socket.emit('answer:submit', { value: window._dcBuckets || {} }); locked = true; renderLocked(); }
 
 function hsClick(id) {
@@ -774,7 +846,7 @@ socket.on('essayData', (data) => {
     if (item.name === MY_NAME) return;
     const card = document.createElement('div');
     card.className = 'essay-card';
-    card.innerHTML = '<div style="font-size:14px;margin-bottom:6px;">"' + item.text + '"</div><div class="muted" style="font-size:12px;">&#10084; <span id="ev_' + idx + '">0</span> votes</div>';
+    card.innerHTML = '<div style="font-size:14px;margin-bottom:6px;">"' + item.text + '"</div><div class="muted" style="font-size:12px;">\u2764 <span id="ev_' + idx + '">0</span> votes</div>';
     card.onclick = () => { socket.emit('vote:submit', { target: item.name }); locked = true; grid.querySelectorAll('.essay-card').forEach(c => c.style.pointerEvents = 'none'); card.classList.add('voted'); renderLocked(); };
     grid.appendChild(card);
   });
@@ -786,29 +858,68 @@ function renderStudentReveal() {
   const mine = results.find(r => r.name === MY_NAME);
   document.getElementById('srTitle').textContent = 'Round ' + (GS.currentQ + 1) + ' Result';
   if (mine && mine.points > 0) {
-    document.getElementById('srEmoji').textContent = '&#127881;';
+    document.getElementById('srEmoji').textContent = '\uD83C\uDF89';
     document.getElementById('srPoints').textContent = '+' + mine.points + ' points';
     document.getElementById('srPoints').style.color = 'var(--emerald)';
   } else {
-    document.getElementById('srEmoji').textContent = '&#128548;';
+    document.getElementById('srEmoji').textContent = '\uD83D\uDE22';
     document.getElementById('srPoints').textContent = '+0 points';
     document.getElementById('srPoints').style.color = 'var(--danger)';
   }
 }
 
 /* ═══ STUDENT: LEADERBOARD ════════════════════════════ */
+let myPrevScore = 0;
 function renderStudentLeaderboard() {
   const order = Object.entries(GS.players).sort((a, b) => b[1].score - a[1].score).map(e => e[1]);
   const myRank = order.findIndex(p => p.name === MY_NAME) + 1;
   const myScore = (GS.players[MY_NAME] || {}).score || 0;
   document.getElementById('slMyRank').textContent = '#' + myRank;
   document.getElementById('slMyScore').textContent = myScore + ' pts';
+  const prev = GS.prevStandings || [];
   let html = '';
   order.forEach((p, i) => {
     const isMe = p.name === MY_NAME;
-    html += '<div class="lb-row" style="' + (isMe ? 'border-color:var(--cyan);' : '') + '"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div><div style="flex:1;font-weight:600;">' + p.name + (isMe ? ' (you)' : '') + '</div><div class="pill">' + p.score + ' pts</div></div>';
+    const prevIdx = prev.indexOf(p.name);
+    const rankUp = prevIdx >= 0 && prevIdx > i;
+    const rankDown = prevIdx >= 0 && prevIdx < i;
+    let rowClass = 'lb-row';
+    if (isMe) rowClass += ' overtake-flash';
+    else if (rankUp) rowClass += ' rank-up-burst';
+    let arrow = '';
+    if (rankUp) arrow = '<span class="arrow-up">\u25B2</span>';
+    else if (rankDown) arrow = '<span class="arrow-down">\u25BC</span>';
+    const scoreId = 's_score_' + p.name.replace(/\s/g, '_');
+    const oldSc = isMe ? myPrevScore : (prevScores[p.name] || 0);
+    html += '<div class="' + rowClass + '" style="' + (isMe ? 'border-color:var(--cyan);' : '') + '"><div class="rank-badge ' + rankBadge(i) + '">' + (i + 1) + '</div><div style="flex:1;font-weight:600;">' + p.name + (isMe ? ' (you)' : '') + '</div>' + arrow + '<div class="pill" id="' + scoreId + '" data-target="' + p.score + '" data-old="' + oldSc + '">' + oldSc + ' pts</div></div>';
   });
   document.getElementById('slList').innerHTML = html;
+  animateStudentScores();
+  myPrevScore = myScore;
+}
+
+function animateStudentScores() {
+  document.querySelectorAll('[id^="s_score_"]').forEach(el => {
+    const target = parseInt(el.getAttribute('data-target'));
+    const start = parseInt(el.getAttribute('data-old'));
+    if (target === start) return;
+    const diff = target - start;
+    const steps = Math.min(Math.abs(diff), 20);
+    const stepTime = 400 / steps;
+    let current = start;
+    let step = 0;
+    const iv = setInterval(() => {
+      step++;
+      current = Math.round(start + (diff * step) / steps);
+      el.textContent = current + ' pts';
+      if (step >= steps) {
+        clearInterval(iv);
+        el.textContent = target + ' pts';
+        el.classList.add('score-pop');
+        setTimeout(() => el.classList.remove('score-pop'), 600);
+      }
+    }, stepTime);
+  });
 }
 
 /* ═══ STUDENT: FINAL ══════════════════════════════════ */
@@ -816,11 +927,22 @@ function renderStudentFinal() {
   const order = Object.entries(GS.players).sort((a, b) => b[1].score - a[1].score).map(e => e[1]);
   const myRank = order.findIndex(p => p.name === MY_NAME) + 1;
   const myScore = (GS.players[MY_NAME] || {}).score || 0;
-  const emojis = ['&#127942;','&#127943;','&#127944;'];
-  document.getElementById('sfEmoji').innerHTML = myRank <= 3 ? emojis[myRank - 1] : '&#127891;';
-  document.getElementById('sfRank').textContent = 'You placed #' + myRank;
+  const emojis = ['\uD83E\uDD47','\uD83E\uDD48','\uD83E\uDD49'];
+  if (myRank <= 3) {
+    document.getElementById('sfEmoji').innerHTML = '<span style="font-size:60px;">' + emojis[myRank - 1] + '</span>';
+    document.getElementById('sfRank').textContent = 'You placed #' + myRank + '!';
+    document.getElementById('sfRank').style.color = 'var(--gold)';
+  } else {
+    document.getElementById('sfEmoji').innerHTML = '<span style="font-size:60px;">\uD83C\uDF93</span>';
+    document.getElementById('sfRank').textContent = 'You placed #' + myRank;
+    document.getElementById('sfRank').style.color = '';
+  }
   document.getElementById('sfScore').textContent = myScore + ' total points';
-  if (myRank <= 3) launchConfetti();
+  launchConfetti();
+  if (myRank <= 3) {
+    setTimeout(() => launchConfetti(), 1000);
+    setTimeout(() => launchConfetti(), 2000);
+  }
 }
 
 /* ═══ HELPERS ═════════════════════════════════════════ */

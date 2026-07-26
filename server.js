@@ -362,7 +362,13 @@ io.on('connection', (socket) => {
     const tMs = Date.now() - state.phaseStart;
     answers[state.currentQ][name] = { value: data.value, tMs };
     socket.emit('answer:locked');
-    io.emit('answer:count', { count: Object.keys(answers[state.currentQ]).length });
+    const count = Object.keys(answers[state.currentQ]).length;
+    io.emit('answer:count', { count });
+    const presentCount = ROSTER.filter(n => players[n]).length;
+    if (count >= presentCount) {
+      clearTimer();
+      autoAdvance();
+    }
   });
 
   socket.on('essay:submit', (data) => {
@@ -386,7 +392,15 @@ io.on('connection', (socket) => {
     if (data.target === name) return socket.emit('error:msg', 'Cannot vote for yourself.');
     votes[name] = data.target;
     socket.emit('vote:locked');
-    io.emit('vote:count', { count: Object.keys(votes).length });
+    const count = Object.keys(votes).length;
+    io.emit('vote:count', { count });
+    const presentCount = ROSTER.filter(n => players[n]).length;
+    if (count >= presentCount) {
+      clearTimer();
+      gradeEssayVotes();
+      state.phase = 'reveal';
+      broadcastState();
+    }
   });
 
   socket.on('requestEssays', () => {
