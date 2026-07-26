@@ -1,0 +1,101 @@
+{
+  "roster": ["Israel","Quisha","Frenz","Joshua","Elisha","Zavannah","Jhazmin","Tiffany","Juhros","Gianne","Enzo"],
+  "tier": [5,4,3,2,1],
+  "questions": [
+    {
+      "id": 0, "type": "mc", "timer": 20,
+      "q": "What is the primary policy shift brought by Republic Act 10121 in Philippine disaster management?",
+      "choices": {
+        "A": "Focusing exclusively on post-disaster emergency financial aid",
+        "B": "Banning all construction in high-density urban areas",
+        "C": "Shifting from reactive emergency response to proactive risk reduction and resilience",
+        "D": "Eliminating natural hazards along shoreline provinces"
+      },
+      "correct": "C"
+    },
+    {
+      "id": 1, "type": "mc", "timer": 20,
+      "q": "A town vulnerable to earthquakes may not be vulnerable to typhoons. What key characteristic of vulnerability does this illustrate?",
+      "choices": {
+        "A": "Hazard-Specific",
+        "B": "Situation-Specific",
+        "C": "Dynamic Nature",
+        "D": "Population Density"
+      },
+      "correct": "A"
+    },
+    {
+      "id": 2, "type": "mc", "timer": 20,
+      "q": "Why is population density a critical factor in evaluating community disaster risk compared to simple population size?",
+      "choices": {
+        "A": "It measures the total financial assets of a city",
+        "B": "It counts the exact number of emergency responders",
+        "C": "It determines the physical length of coastlines",
+        "D": "It reflects spatial congestion, which can cause severe escape bottlenecks during emergencies"
+      },
+      "correct": "D"
+    },
+    {
+      "id": 3, "type": "similarity", "timer": 50,
+      "q": "In your own words, describe what VULNERABILITY means based on DRRM principles.",
+      "reference": "Vulnerability is a state of being at risk or susceptible to the damaging effects of a hazard, determining the ability to predict, cope with, resist, and recover."
+    },
+    {
+      "id": 4, "type": "dragmatch", "timer": 30,
+      "q": "Drag each term into the description it matches.",
+      "terms": ["Population Size", "Spatial Distribution", "Population Density"],
+      "slots": [
+        {"key": "A", "desc": "The total count of individuals inhabiting a space at the exact same time (e.g., 65,000 residents)."},
+        {"key": "B", "desc": "How people are spread out across a land area (e.g., 80% on farmlands vs. 20% on a riverbank)."},
+        {"key": "C", "desc": "The number of individuals living in an area relative to the physical size of that area (e.g., 20,000 people per km\u00B2)."}
+      ],
+      "correct": {"A": "Population Size", "B": "Spatial Distribution", "C": "Population Density"}
+    },
+    {
+      "id": 5, "type": "dragclassify", "timer": 30,
+      "q": "Drag each scenario into the correct bucket: Vulnerability or Not Vulnerable / Capacity.",
+      "scenarios": [
+        {"key": "s1", "text": "Substandard building design along an active fault line"},
+        {"key": "s2", "text": "Hazard-proof concrete construction with emergency savings"},
+        {"key": "s3", "text": "Lack of local DRRM training and community awareness"},
+        {"key": "s4", "text": "Early warning typhoon prediction systems and designated shelters"}
+      ],
+      "buckets": ["Vulnerability", "Not Vulnerable / Capacity"],
+      "correct": {"s1": "Vulnerability", "s2": "Not Vulnerable / Capacity", "s3": "Vulnerability", "s4": "Not Vulnerable / Capacity"}
+    },
+    {
+      "id": 6, "type": "hotspot", "timer": 20,
+      "q": "Click/Tap the 3 hazardous elements before time runs out!",
+      "hotspots": [
+        {"id": "wire", "x": 22, "y": 60, "icon": "\u26A1", "label": "Exposed Wiring"},
+        {"id": "plug", "x": 70, "y": 35, "icon": "\uD83D\uDD0C", "label": "Overloaded Plug"},
+        {"id": "exit", "x": 48, "y": 78, "icon": "\uD83D\uDEAA", "label": "Blocked Exit"}
+      ]
+    },
+    {
+      "id": 7, "type": "swipe", "timer": 25,
+      "q": "Swipe RIGHT for CAPACITY / Swipe LEFT for VULNERABILITY",
+      "cards": [
+        {"text": "Deforested mountain slope prone to erosion", "answer": "left"},
+        {"text": "DRRM-trained local volunteer teams", "answer": "right"},
+        {"text": "Low-income family with no emergency savings", "answer": "left"},
+        {"text": "Community with functional early warning systems", "answer": "right"}
+      ]
+    },
+    {
+      "id": 8, "type": "dragrank", "timer": 30,
+      "q": "Rank these communities from LEAST Vulnerable (Bottom) to MOST Vulnerable (Top).",
+      "items": [
+        {"key": "i1", "text": "Informal settlement with high population density along a flood riverbank"},
+        {"key": "i2", "text": "Rural village with spread-out housing but limited emergency funding"},
+        {"key": "i3", "text": "Retrofitted urban community with hazard-proof housing and active DRRM teams"}
+      ],
+      "correctOrderBottomToTop": ["i3", "i2", "i1"]
+    },
+    {
+      "id": 9, "type": "essayvote", "submitTimer": 50, "voteTimer": 30, "maxChars": 100,
+      "q": "Explain how high population density increases disaster risk during an emergency."
+    }
+  ],
+  "colors": ["#10B981","#06B6D4","#F59E0B","#EF4444","#8B5CF6","#EC4899","#F97316","#F8FAFC"]
+}
