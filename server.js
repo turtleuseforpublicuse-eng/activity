@@ -260,8 +260,8 @@ io.on('connection', (socket) => {
     answers[0] = {};
     const q = QUESTIONS[0];
     const timer = q.submitTimer || q.timer || 30;
-    broadcastState();
     startTimer(timer, () => autoAdvance());
+    broadcastState();
   });
 
   function autoAdvance() {
@@ -318,8 +318,8 @@ io.on('connection', (socket) => {
     votes = {};
     const q = QUESTIONS[next];
     const timer = q.submitTimer || q.timer || 30;
-    broadcastState();
     startTimer(timer, () => autoAdvance());
+    broadcastState();
   });
 
   socket.on('host:reset', () => {

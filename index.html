@@ -199,7 +199,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
     <div class="glass" style="padding:36px;">
       <h2>Hey, <span id="waitName"></span>!</h2>
       <p class="muted">Waiting for host to start the game...</p>
-      <div style="font-size:40px;margin-top:16px;" class="muted">\u231B</div>
+      <div style="font-size:40px;margin-top:16px;" class="muted">&#9203;</div>
     </div>
   </div>
 </div>
@@ -297,7 +297,7 @@ textarea:focus,.text-input:focus{border-color:var(--cyan);}
 <div id="studentLocked" class="screen">
   <div class="cw narrow fade-in" style="text-align:center;margin-top:12vh;">
     <div class="glass" style="padding:36px;">
-      <div style="font-size:44px;">\uD83D\uDD12</div>
+      <div style="font-size:44px;">&#128274;</div>
       <h3 style="margin-top:10px;">Answer locked in!</h3>
       <p class="muted">Waiting for other students...</p>
       <div class="timerbar" style="margin-top:16px;"><div class="fill" id="slBar"></div></div>
@@ -697,10 +697,11 @@ function renderHostFinal() {
     const h = heights[visualIdx];
     const classes = ['gold', 'silver', 'bronze'];
     const medals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+    const medal = medals[rank];
     const crown = rank === 0 ? '<div class="winner-crown" style="font-size:32px;margin-bottom:4px;">\uD83D\uDC51</div>' : '';
     const avClass = rank === 0 ? 'avatar big winner-glow ' + avRank(rank) : 'avatar big ' + avRank(rank);
     const av = p.avatar ? '<img class="' + avClass + '" src="' + p.avatar + '">' : '<div class="' + avClass + '"></div>';
-    podium += '<div class="podium-col" style="animation:fadeIn .6s ease ' + (visualIdx * 0.2) + 's both;">' + crown + av + '<div style="font-weight:800;margin-top:6px;font-size:' + (rank === 0 ? '18px' : '15px') + ';">' + p.name + '</div><div class="muted" style="font-size:13px;">' + p.score + ' pts</div><div class="podium-base ' + classes[visualIdx] + '" style="width:' + (120 - visualIdx * 20) + 'px;height:' + h + 'px;">' + medals[visualIdx] + '</div></div>';
+    podium += '<div class="podium-col" style="animation:fadeIn .6s ease ' + (visualIdx * 0.2) + 's both;">' + crown + av + '<div style="font-weight:800;margin-top:6px;font-size:' + (rank === 0 ? '18px' : '15px') + ';">' + p.name + '</div><div class="muted" style="font-size:13px;">' + p.score + ' pts</div><div class="podium-base ' + classes[visualIdx] + '" style="width:' + (120 - visualIdx * 20) + 'px;height:' + h + 'px;">' + medal + '</div></div>';
   });
   document.getElementById('hfPodium').innerHTML = podium;
   let list = '';
@@ -739,7 +740,7 @@ function renderStudentQuestion() {
     html += '<button class="btn btn-emerald" style="width:100%;margin-top:10px;" onclick="dmSubmit()">Submit</button>';
   } else if (q.type === 'dragclassify') {
     q.scenarios.forEach(s => {
-      html += '<div class="drag-chip" style="width:100%;margin-bottom:8px;" draggable="true" data-key="' + s.key + '" ondragstart="dcDragStart(event)">' + s.text + '</div>';
+      html += '<div class="drag-chip" id="dc_' + s.key + '" style="width:100%;margin-bottom:8px;" draggable="true" data-key="' + s.key + '" ondragstart="dcDragStart(event)">' + s.text + '</div>';
     });
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">';
     q.buckets.forEach(b => {
@@ -789,7 +790,7 @@ function dmSubmit() { const s = window._dmSlots || {}; if (!s.A || !s.B || !s.C)
 let dcDragged = null;
 let dcDraggedText = '';
 function dcDragStart(e) { dcDragged = e.target.getAttribute('data-key'); dcDraggedText = e.target.textContent; }
-function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDraggedText; holder.appendChild(chip); } dcDragged = null; dcDraggedText = ''; }
+function dcDrop(e, bucket) { e.currentTarget.classList.remove('over'); if (!dcDragged) return; window._dcBuckets = window._dcBuckets || {}; window._dcBuckets[dcDragged] = bucket; const holder = e.currentTarget.querySelector('div[id^="bkt_"]'); if (holder) { const chip = document.createElement('div'); chip.style.cssText = 'font-size:11px;margin-top:4px;padding:4px 8px;background:rgba(255,255,255,0.08);border-radius:6px;'; chip.textContent = dcDraggedText; holder.appendChild(chip); } const src = document.getElementById('dc_' + dcDragged); if (src) src.style.display = 'none'; dcDragged = null; dcDraggedText = ''; }
 function dcSubmit() { socket.emit('answer:submit', { value: window._dcBuckets || {} }); locked = true; renderLocked(); }
 
 function hsClick(id) {
@@ -875,11 +876,11 @@ function renderStudentReveal() {
   const mine = results.find(r => r.name === MY_NAME);
   document.getElementById('srTitle').textContent = 'Round ' + (GS.currentQ + 1) + ' Result';
   if (mine && mine.points > 0) {
-    document.getElementById('srEmoji').textContent = '\uD83C\uDF89';
+    document.getElementById('srEmoji').innerHTML = '&#127881;';
     document.getElementById('srPoints').textContent = '+' + mine.points + ' points';
     document.getElementById('srPoints').style.color = 'var(--emerald)';
   } else {
-    document.getElementById('srEmoji').textContent = '\uD83D\uDE22';
+    document.getElementById('srEmoji').innerHTML = '&#128532;';
     document.getElementById('srPoints').textContent = '+0 points';
     document.getElementById('srPoints').style.color = 'var(--danger)';
   }
