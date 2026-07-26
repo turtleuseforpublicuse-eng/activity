@@ -204,6 +204,16 @@ io.on('connection', (socket) => {
   socket.emit('config', { roster: ROSTER, colors: config.colors });
   broadcastState();
 
+  /* Client requests */
+socket.on('requestRoster', () => { socket.emit('rosterData', ROSTER); });
+socket.on('requestState', () => { broadcastState(); });
+socket.on('requestEssays', () => {
+  const q = QUESTIONS[state.currentQ];
+  if (!q || q.type !== 'essayvote') return;
+  const order = state.essayOrder || Object.keys(essays);
+  socket.emit('essayData', order.map(name => ({ name, text: essays[name] ? essays[name].text : '' })));
+});
+
   /* Student joins */
   socket.on('student:join', (data) => {
     const name = (data.name || '').trim();
